@@ -1,0 +1,96 @@
+:root {
+  --bg: #FDFDFD;
+  --text: #0E2442;
+  --panel: #2C4E82;
+  --ptext: #FDFDFD;
+  --accent: #D78212;
+  --grid: rgba(253, 253, 253, .18);
+  --border: transparent;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+#viz { position: absolute; inset: 0; overflow: hidden; }
+
+.panel {
+  position: absolute;
+  background: var(--panel);
+  color: var(--ptext);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel.bd { box-shadow: 0 0 0 1px var(--border); }
+
+.hd { flex: none; text-align: center; padding: 2px 4px 0; line-height: 1.22; }
+.hd.left { text-align: left; }
+.hd .row { display: flex; align-items: baseline; gap: 6px; }
+.hd .row .t { flex: 1 1 auto; min-width: 0; }
+.hd .row .s { flex: none; opacity: .7; }
+.hd .t.hl { color: var(--accent); }
+.hd div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd .g { opacity: .75; letter-spacing: .04em; }
+.hd .t { font-weight: 700; }
+.hd .s { font-weight: 600; opacity: .92; }
+
+.plotwrap { flex: 1 1 0; min-height: 0; position: relative; }
+.plot { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.yr { position: absolute; line-height: 1.2; font-weight: 700; color: var(--ptext); opacity: .45; pointer-events: none; white-space: nowrap; }
+.yr.hot { color: var(--accent); opacity: 1; }
+.plot .grid { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.plot .edge { fill: none; stroke: var(--ptext); stroke-opacity: .75; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.plot .ln { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.plot .gt { stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.plot .halo { stroke: var(--panel); stroke-opacity: .85; }
+.plot .ln.halo { stroke-width: 4.5; }
+.plot .gt.halo { stroke-width: 5; }
+.plot .zero { stroke: var(--ptext); stroke-opacity: .55; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.plot .hair { stroke: var(--ptext); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 2; display: none; }
+
+.axis { position: absolute; color: var(--text); opacity: .8; font-weight: 600; }
+.axis span { position: absolute; top: 3px; white-space: nowrap; transform: translateX(-50%); }
+.axis span.first { transform: none; }
+.axis span.last { transform: translateX(-100%); }
+
+.legend { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 16px; justify-content: space-between; overflow: hidden; white-space: nowrap; padding: 0 4px; box-sizing: border-box; }
+.legend .lg { display: flex; gap: 12px; align-items: center; min-width: 0; overflow: hidden; }
+.legend .lg span { display: inline-flex; align-items: center; }
+.legend .cn { opacity: .7; }
+.legend .ramp { display: inline-block; width: 110px; height: .8em; border-radius: 2px; }
+.legend .k { display: inline-block; width: .8em; height: .8em; margin-right: 5px; border-radius: 2px; }
+.legend .k-area { opacity: .6; }
+.legend .k-line { width: 1.3em; height: 2px; border-radius: 1px; }
+.legend .k-gantt { width: 1em; height: 3px; border-radius: 0; }
+
+.note { position: absolute; right: 4px; bottom: 0; font-size: 10px; opacity: .7; }
+
+#empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 16px; box-sizing: border-box; font-size: 14px; line-height: 1.7; color: var(--text);
+}
+#empty[hidden], #tip[hidden], #badge[hidden] { display: none; }
+#empty b { color: var(--accent); }
+#empty .en { font-size: 12px; opacity: .75; }
+
+#tip {
+  position: fixed; z-index: 10; pointer-events: none; max-width: 240px;
+  background: #0E2442; color: #FDFDFD; border: 1px solid rgba(253, 253, 253, .25); border-radius: 4px;
+  padding: 6px 8px; font-size: 12px; line-height: 1.45; box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+#tip .tt { font-weight: 700; }
+#tip .tx { opacity: .75; margin-bottom: 2px; }
+#tip .tr { display: flex; justify-content: space-between; gap: 12px; }
+#tip .tr i { display: inline-block; width: .7em; height: .7em; margin-right: 5px; border-radius: 2px; }
+
+#badge {
+  position: fixed; right: 4px; bottom: 4px; z-index: 5; font-size: 9px; opacity: .9; pointer-events: none; font-weight: 700; letter-spacing: .08em;
+  background: #EFC262; color: #0E2442; padding: 2px 6px; border-radius: 3px;
+}

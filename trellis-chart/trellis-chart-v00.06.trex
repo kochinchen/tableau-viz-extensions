@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <worksheet-extension id="com.billchen.trellischart" extension-version="0.6.0">
+    <default-locale>en_US</default-locale>
+    <name>Trellis Chart</name>
+    <description>Small multiples (trellis) chart: one mini chart per dimension member, laid out on a grid with a chosen number of columns.</description>
+    <author name="Bill Chen" email="author@example.com" organization="Aviation BI" website="https://example.com"/>
+    <min-api-version>1.12</min-api-version>
+    <source-location>
+      <url>http://localhost:8765/index.html</url>
+    </source-location>
+    <icon>iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==</icon>
+    <context-menu>
+      <configure-context-menu-item/>
+    </context-menu>
+    <encoding id="panel">
+      <display-name>A 分格 Panel</display-name>
+      <role-spec><role-type>discrete-dimension</role-type></role-spec>
+      <fields max-count="2"/>
+      <encoding-icon token="letter-a"/>
+      <tooltip resource-id="tip-panel">A 分格：放 1 到 2 個維度，每個成員畫成一張小圖；放 2 個時，第一個當作群組。&#10;A Panel: drop 1 or 2 dimensions. Each member becomes one small chart; with 2, the first one acts as the group.</tooltip>
+    </encoding>
+    <encoding id="x">
+      <display-name>B 橫軸 X axis</display-name>
+      <fields max-count="1"/>
+      <encoding-icon token="letter-b"/>
+      <tooltip resource-id="tip-x">B 橫軸：放日期（建議用連續的月或年）或一個維度，作為每張小圖的橫軸。&#10;B X axis: drop a date (continuous month or year works best) or one dimension. It becomes the horizontal axis of every small chart.</tooltip>
+    </encoding>
+    <encoding id="value">
+      <display-name>C 數值 Value</display-name>
+      <data-spec><data-type>numeric</data-type></data-spec>
+      <fields max-count="2"/>
+      <encoding-icon token="letter-c"/>
+      <tooltip resource-id="tip-value">C 數值（必填）：放 1 到 2 個度量。第一個是主軸，例如 SUM(銷售額)；第二個是副軸，例如利潤率。圖形、是否共軸、數字格式在「設定擴充功能格式」裡選。&#10;C Value (required): drop 1 or 2 measures. The first is the primary axis, e.g. SUM(Sales); the second is the secondary axis, e.g. profit ratio. Pick mark types, shared or separate axis and number formats under Format Extension.</tooltip>
+    </encoding>
+    <encoding id="color">
+      <display-name>D 顏色 Color</display-name>
+      <fields max-count="1"/>
+      <encoding-icon token="letter-d"/>
+      <tooltip resource-id="tip-color">D 顏色（選填）：放度量，長條依數值上色（例如年增率，衰退越多顏色越深）；放維度，長條改為依成員堆疊分色。&#10;D Color (optional): a measure shades the bars by value (e.g. YoY %, deeper colour means a bigger drop); a dimension stacks the bars by member.</tooltip>
+    </encoding>
+  </worksheet-extension>
+</manifest>

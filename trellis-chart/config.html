@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>Trellis Chart 設定</title>
+  <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api/lib/tableau.extensions.1.latest.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body { font: 13px/1.5 "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif; color: #0E2442; background: #FDFDFD; display: flex; flex-direction: column; }
+    h1 { font-size: 15px; margin: 0; padding: 12px 16px; background: #0E2442; color: #FDFDFD; }
+    form { flex: 1; overflow: auto; padding: 12px 16px; display: grid; grid-template-columns: 120px 1fr; gap: 9px 10px; align-items: center; align-content: start; }
+    h2 { grid-column: 1 / -1; font-size: 12px; margin: 6px 0 0; color: #2C4E82; border-bottom: 1px solid #ECECEB; padding-bottom: 3px; }
+    select, input[type=number], input[type=text] { width: 100%; box-sizing: border-box; padding: 5px 6px; border: 1px solid #ECECEB; border-radius: 4px; background: #fff; color: inherit; font: inherit; }
+    small { color: #9C805F; grid-column: 2; margin-top: -6px; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .row input[type=range] { flex: 1; }
+    footer { padding: 10px 16px; border-top: 1px solid #ECECEB; display: flex; justify-content: flex-end; gap: 8px; }
+    button { font: inherit; padding: 6px 16px; border-radius: 4px; border: 1px solid #2C4E82; background: #fff; color: #2C4E82; cursor: pointer; }
+    button.primary { background: #D78212; border-color: #D78212; color: #fff; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Trellis Chart 設定 <span style="font-weight:400;opacity:.6;font-size:12px">v0.8</span></h1>
+  <form id="f" onsubmit="return false">
+    <h2>版面</h2>
+    <label for="cols">橫向格數</label>
+    <input id="cols" type="number" min="0" max="50" step="1">
+    <small>填 0 為自動；直向列數 = 分格總數 ÷ 橫向格數（無條件進位）</small>
+
+    <label for="minh">最小列高 (px)</label>
+    <input id="minh" type="number" min="0" max="400" step="10">
+    <small>填 0 為全部縮放塞進窗格、不出現捲軸；分格很多時可填 80–120，超出就改為上下捲動</small>
+
+    <label for="sort">分格排序</label>
+    <select id="sort">
+      <option value="last-desc">最後一期的值，大到小</option>
+      <option value="last-asc">最後一期的值，小到大</option>
+      <option value="avg-desc">平均值，大到小</option>
+      <option value="name">名稱</option>
+      <option value="data">依 Tableau 資料順序</option>
+    </select>
+
+    <label for="group">兩階層時</label>
+    <select id="group">
+      <option value="1">同一個第一階層排在一起</option>
+      <option value="0">不分組，全部一起排序</option>
+    </select>
+
+    <h2>C1 主軸（C 的第一個度量）</h2>
+    <label for="chart">圖形</label>
+    <select id="chart">
+      <option value="bar">長條圖</option>
+      <option value="line">折線圖</option>
+      <option value="area">面積圖</option>
+      <option value="gantt">甘特（每期一條短橫線）</option>
+    </select>
+
+    <label for="fmt">數字格式</label>
+    <select id="fmt">
+      <option value="tableau">沿用 Tableau 格式</option>
+      <option value="pct100">百分比：數值 × 100（0.85 → 85%）</option>
+      <option value="pctsign">百分比：只加 % 符號（85 → 85%）</option>
+      <option value="compact">精簡（1.2K、3.4M）</option>
+    </select>
+
+    <label for="cdec">小數位</label>
+    <select id="cdec">
+      <option value="auto">自動（沿用格式）</option>
+      <option value="0">不顯示小數</option>
+      <option value="1">1 位</option>
+      <option value="2">2 位</option>
+      <option value="3">3 位</option>
+      <option value="4">4 位</option>
+    </select>
+
+    <label for="ymode">直軸範圍</label>
+    <select id="ymode">
+      <option value="free">各分格獨立（看各自走勢）</option>
+      <option value="shared">所有分格共用（可互相比較大小）</option>
+      <option value="unit">固定 0–100%（比率型度量）</option>
+      <option value="pct">占比 100% 堆疊（D 顏色需放維度）</option>
+    </select>
+    <small>副軸也跟著這個設定：各分格獨立，或所有分格共用</small>
+
+    <h2>C2 副軸（C 的第二個度量，選填）</h2>
+    <label for="chart2">圖形</label>
+    <select id="chart2">
+      <option value="bar">長條圖</option>
+      <option value="line">折線圖</option>
+      <option value="area">面積圖</option>
+      <option value="gantt">甘特（每期一條短橫線）</option>
+    </select>
+    <small>主副軸都選長條時，副軸畫成主長條內的細長條</small>
+
+    <label for="axis2">與主軸的關係</label>
+    <select id="axis2">
+      <option value="indep">不共軸：副軸用自己的刻度（單位不同時）</option>
+      <option value="zero">不共軸，但 0 基準線對齊（負值畫在基準線下方）</option>
+      <option value="sync">共軸：和主軸用同一個刻度（單位相同時）</option>
+    </select>
+
+    <label for="zero2">副軸起點</label>
+    <select id="zero2">
+      <option value="0">自動範圍（折線、甘特較看得出起伏）</option>
+      <option value="1">從 0 開始</option>
+    </select>
+    <small>只在「不共軸」且圖形為折線或甘特時有差別；長條與面積一律從 0 開始。選「0 基準線對齊」或「共軸」時，副軸一定包含 0</small>
+
+    <label for="fmt2">數字格式</label>
+    <select id="fmt2">
+      <option value="tableau">沿用 Tableau 格式</option>
+      <option value="pct100">百分比：數值 × 100（0.85 → 85%）</option>
+      <option value="pctsign">百分比：只加 % 符號（85 → 85%）</option>
+      <option value="compact">精簡（1.2K、3.4M）</option>
+    </select>
+
+    <label for="cdec2">小數位</label>
+    <select id="cdec2">
+      <option value="auto">自動（沿用格式）</option>
+      <option value="0">不顯示小數</option>
+      <option value="1">1 位</option>
+      <option value="2">2 位</option>
+      <option value="3">3 位</option>
+      <option value="4">4 位</option>
+    </select>
+
+    <label for="color2">副軸顏色</label>
+    <div class="row">
+      <label><input id="color2Auto" type="checkbox"> 依主題</label>
+      <input id="color2" type="color" value="#0E2442">
+    </div>
+
+    <label for="swap">主副軸對調</label>
+    <select id="swap">
+      <option value="0">否：第一個膠囊為主軸</option>
+      <option value="1">是：第二個膠囊為主軸</option>
+    </select>
+
+    <h2>D 顏色</h2>
+    <label for="cmode">長條上色</label>
+    <select id="cmode">
+      <option value="neg">只標出負值（衰退越多越深）</option>
+      <option value="div">正負雙向（衰退、成長各一色）</option>
+    </select>
+    <small>D 放度量（如年增率）時生效；放維度則改為堆疊分色</small>
+
+    <label for="ddec">小數位</label>
+    <select id="ddec">
+      <option value="auto">自動（沿用格式）</option>
+      <option value="0">不顯示小數</option>
+      <option value="1">1 位</option>
+      <option value="2">2 位</option>
+      <option value="3">3 位</option>
+      <option value="4">4 位</option>
+    </select>
+
+    <h2>標示</h2>
+    <label for="sub">副標</label>
+    <select id="sub">
+      <option value="1">顯示主軸最後一期的值</option>
+      <option value="0">不顯示</option>
+    </select>
+
+    <label for="yr">年份標記</label>
+    <select id="yr">
+      <option value="1">橫軸為日期時，在每年第一期上方標年份</option>
+      <option value="0">不顯示</option>
+    </select>
+
+    <h2>樣式</h2>
+    <label for="hl">強調特定分格</label>
+    <input id="hl" type="text" placeholder="填分格的名稱，例：桌子, 椅子">
+    <small>這裡不是圖表標題。填入分格（A 的成員）名稱的一部分，該分格的標題會改用強調色，方便在一堆小圖裡找到它；多個以逗號分隔</small>
+
+    <label for="align">標題對齊</label>
+    <select id="align">
+      <option value="left">靠左（副標在同一行右側）</option>
+      <option value="center">置中</option>
+    </select>
+
+    <label for="theme">主題</label>
+    <select id="theme">
+      <option value="paper">白底格線 + 灰藍長條</option>
+      <option value="navy">鋼藍分格 + 琥珀橘</option>
+      <option value="light">天空藍分格 + 鋼藍</option>
+      <option value="warm">沙金分格 + 琥珀橘</option>
+      <option value="dark">深色</option>
+      <option value="teal">青綠 + 粉紅（原圖配色）</option>
+    </select>
+
+    <label for="accent">強調色</label>
+    <div class="row">
+      <label><input id="accentAuto" type="checkbox"> 依主題</label>
+      <input id="accent" type="color" value="#D78212">
+    </div>
+    <small>用在：被強調的分格標題、D 放度量時的衰退色與其年份標記。取消「依主題」自選顏色時，沒有依度量上色的長條也會改用這個顏色</small>
+
+    <label for="scale">文字大小</label>
+    <div class="row"><input id="scale" type="range" min="0.6" max="2" step="0.1"><span id="scaleOut"></span></div>
+  </form>
+  <footer>
+    <button id="cancel" type="button">取消</button>
+    <button id="save" type="button" class="primary">套用</button>
+  </footer>
+
+  <script>
+    const DEFAULTS = { cols: '0', minh: '0', sort: 'name', group: '1', ymode: 'free', sub: '0', yr: '1', chart: 'bar', fmt: 'tableau', cdec: 'auto', chart2: 'line', fmt2: 'tableau', cdec2: 'auto', axis2: 'indep', zero2: '0', swap: '0', color2: '', cmode: 'neg', ddec: 'auto', hl: '', align: 'left', theme: 'paper', accent: '', scale: '1' };
+    const $ = id => document.getElementById(id);
+    const simple = ['cols', 'minh', 'sort', 'group', 'ymode', 'sub', 'yr', 'chart', 'fmt', 'cdec', 'chart2', 'fmt2', 'cdec2', 'axis2', 'zero2', 'swap', 'cmode', 'ddec', 'hl', 'align', 'theme', 'scale'];
+
+    function fill(all) {
+      const s = { ...DEFAULTS, ...all };
+      simple.forEach(k => { $(k).value = s[k]; });
+      $('accentAuto').checked = !s.accent;
+      if (s.accent) $('accent').value = s.accent;
+      $('color2Auto').checked = !s.color2;
+      if (s.color2) $('color2').value = s.color2;
+      if (s.fmt === 'percent') $('fmt').value = 'pct100';   // older saved value
+      sync();
+    }
+    function sync() {
+      $('accent').disabled = $('accentAuto').checked;
+      $('color2').disabled = $('color2Auto').checked;
+      $('scaleOut').textContent = Math.round($('scale').value * 100) + '%';
+    }
+    $('accentAuto').addEventListener('change', sync);
+    $('color2Auto').addEventListener('change', sync);
+    $('scale').addEventListener('input', sync);
+
+    tableau.extensions.initializeDialogAsync().then(() => {
+      fill(tableau.extensions.settings.getAll());
+      $('cancel').onclick = () => tableau.extensions.ui.closeDialog('');
+      $('save').onclick = async () => {
+        const st = tableau.extensions.settings;
+        simple.forEach(k => st.set(k, String($(k).value === '' ? DEFAULTS[k] : $(k).value)));
+        st.set('accent', $('accentAuto').checked ? '' : $('accent').value);
+        st.set('color2', $('color2Auto').checked ? '' : $('color2').value);
+        await st.saveAsync();
+        tableau.extensions.ui.closeDialog('');
+      };
+    });
+  </script>
+</body>
+</html>
