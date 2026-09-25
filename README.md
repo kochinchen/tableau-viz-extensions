@@ -1,6 +1,6 @@
 # Tableau Viz Extensions
 
-Tableau viz extensions by Bill Chen (Aviation BI)。每個子資料夾是一個 extension，透過 GitHub Pages 以 https 提供，`.trex` 的 `source-location` 指向該網址。
+Tableau viz extensions by Bill Chen。每個子資料夾是一個 extension，透過 GitHub Pages 以 https 提供，`.trex` 的 `source-location` 指向該網址。
 
 ## Trellis Chart
 
