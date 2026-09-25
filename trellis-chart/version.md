@@ -12,6 +12,22 @@ Tableau viz extension，把一個度量依維度成員拆成多張小圖（small
 
 ---
 
+## v00.10 — 2026-09-25 — `trellis-chart-v00.10.trex`
+
+Reload 即可（manifest 與 v00.09 相比只改了 `extension-version`）。
+
+**新增：互動（點選與滑過會傳給 Tableau）**
+- 點分格：把該成員所有期間的標記選起來，並用 `selectTuplesAsync` 交給 Tableau；儀表板上設在這張工作表的篩選／醒目提示動作因此會作用到其他工作表。Ctrl / Cmd 點擊可加選，再點一次或按 Esc 清除，點空白處也清除。
+- 設定「Click selects」可改為只選游標下的那一期，或關閉點選。
+- 滑過：用 `hoverTupleAsync` 把游標下的標記告訴 Tableau，滑過型的醒目提示動作會生效。
+- 設定「Tooltip」可改用 Tableau 的工具提示（顯示工作表 Tooltip 架上的內容），此時 extension 自己的提示會隱藏。
+- 選取狀態會畫出來：被選的分格加強調色外框，其他分格變淡；只選一期時，同一分格內其他長條變淡。從 Tableau 那邊改變選取（例如在別張工作表點選、清除）也會同步（`MarkSelectionChanged`）。
+- tuple id 採用 Tableau 官方 Sankey 範例的慣例：摘要資料的列序 + 1。
+
+**注意**
+- 要讓其他工作表跟著變，仍需在儀表板加「動作」（篩選或醒目提示），來源選這張 Trellis 工作表。
+- 互動只在 Tableau 內生效；瀏覽器 demo 只會看到選取的變淡效果。
+
 ## v00.09 — 2026-09-25 — `trellis-chart-v00.09.trex`
 
 需重新加入（tile 名稱與提示文字改為英文）。

@@ -29,6 +29,10 @@ html, body {
 }
 
 .panel.bd { box-shadow: 0 0 0 1px var(--border); }
+.panel { cursor: pointer; transition: opacity .15s; }
+.panel.dim { opacity: .3; }
+.panel.sel { box-shadow: inset 0 0 0 2px var(--accent); }
+.plot rect.dm { opacity: .3; }
 
 .hd { flex: none; text-align: center; padding: 2px 4px 0; line-height: 1.22; }
 .hd.left { text-align: left; }

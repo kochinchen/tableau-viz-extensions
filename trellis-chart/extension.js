@@ -16,9 +16,10 @@ const DEFAULTS = {
   chart: 'bar', fmt: 'tableau', cdec: 'auto',                                   // C1, primary axis
   chart2: 'line', fmt2: 'tableau', cdec2: 'auto', axis2: 'indep', zero2: '0', swap: '0', color2: '',   // C2, secondary axis
   cmode: 'neg', ddec: 'auto',                                                   // D as a measure
-  hl: '', align: 'left', theme: 'paper', accent: '', scale: 1
+  hl: '', align: 'left', theme: 'paper', accent: '', scale: 1,
+  click: 'panel', tip: 'own'   // click: panel | mark | off; tip: own | tableau
 };
-const VERSION = '0.9';
+const VERSION = '0.10';
 const MAX_PANELS = 400;
 const SEP = String.fromCharCode(31);
 
@@ -30,6 +31,9 @@ let color2 = theme.second;
 let model = null;
 let colors = [];
 let raf = 0;
+let selected = new Set();      // tuple ids currently selected (1-based row index of the summary table)
+let rowVals = [];              // per summary row: Map fieldName -> value, to match Tableau's selection back to tuple ids
+let lastHoverTid = 0;
 
 const $viz = document.getElementById('viz');
 const $empty = document.getElementById('empty');
@@ -38,6 +42,8 @@ const $tip = document.getElementById('tip');
 async function boot() {
   $viz.addEventListener('mousemove', onHover);
   $viz.addEventListener('mouseleave', hideTip);
+  $viz.addEventListener('click', onClick);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') applySelection([], e); });
   $viz.addEventListener('scroll', hideTip);
   new ResizeObserver(scheduleDraw).observe(document.body);
   if (!window.tableau?.extensions) return demoMode();
@@ -47,6 +53,7 @@ async function boot() {
   worksheet = tableau.extensions.worksheetContent.worksheet;
   readSettings();
   worksheet.addEventListener(tableau.TableauEventType.SummaryDataChanged, refresh);
+  worksheet.addEventListener(tableau.TableauEventType.MarkSelectionChanged, syncSelection);
   tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, () => {
     readSettings(); refresh();   // refresh, not just redraw: swapping the axes changes which column is primary
   });
@@ -97,10 +104,12 @@ async function refresh() {
     const [vCol, v2Col] = vCols;
 
     const recs = [];
-    for (const r of table.data) {
+    rowVals = [];
+    table.data.forEach((r, rowIdx) => {
+      rowVals.push(new Map(cols.map(c => [c.fieldName, String(r[c.index].value)])));
       const num = c => { const v = c ? r[c.index].nativeValue : null; return typeof v === 'number' && isFinite(v) ? v : null; };
       const v = num(vCol), v2 = num(v2Col);
-      if (v === null && v2 === null) continue;
+      if (v === null && v2 === null) return;
       let x = { key: '', label: '', sort: 0, year: null };
       if (xCol) {
         const c = r[xCol.index], nv = c.nativeValue;
@@ -120,13 +129,15 @@ async function refresh() {
         s: sCol ? r[sCol.index].formattedValue : null,
         v, f: v === null ? null : r[vCol.index].formattedValue,
         v2, f2: v2 === null ? null : r[v2Col.index].formattedValue,
-        c: num(cCol), cf: cCol ? r[cCol.index].formattedValue : null
+        c: num(cCol), cf: cCol ? r[cCol.index].formattedValue : null,
+        t: rowIdx + 1   // tuple id, same convention as Tableau's Sankey sample
       });
-    }
+    });
     if (!recs.length) return drawEmpty('No data under the current filters');
     model = buildModel(recs, {
       levels: pCols.length, valueName: vCol.fieldName, value2Name: v2Col ? v2Col.fieldName : '', colorName: cCol ? cCol.fieldName : ''
     });
+    await syncSelection();
     scheduleDraw();
   } catch (e) {
     console.error(e);
@@ -161,13 +172,15 @@ function buildModel(recs, meta) {
         group: r.p.length > 1 ? r.p[0] : '',
         vals: grid(), vals2: grid(), seen: new Set(),
         fmt: new Array(nX).fill(null), fmt2: new Array(nX).fill(null),
-        cval: new Array(nX).fill(null), cfmt: new Array(nX).fill(null)
+        cval: new Array(nX).fill(null), cfmt: new Array(nX).fill(null),
+        tid: grid(), tuples: []
       };
       pMap.set(pk, p);
     }
     const si = sMap.get(r.s ?? ''), xi = xIdx.get(r.x.key);
     const dup = p.seen.has(si + ':' + xi);
     p.seen.add(si + ':' + xi);
+    if (r.t) { p.tuples.push(r.t); if (p.tid[si][xi] === null) p.tid[si][xi] = r.t; }
     if (r.v !== null) p.vals[si][xi] = (p.vals[si][xi] || 0) + r.v;
     if (r.v2 !== null) p.vals2[si][xi] = (p.vals2[si][xi] || 0) + r.v2;
     // Tableau's own formatted text is only trustworthy for a single, un-aggregated cell
@@ -302,6 +315,69 @@ function colorFor(cv) {
   if (cv < 0 && lo < 0) return mix(theme.neutral, accent, Math.min(1, 0.15 + 0.85 * cv / lo));
   if (cv > 0 && hi > 0 && settings.cmode === 'div') return mix(theme.neutral, theme.up, Math.min(1, 0.15 + 0.85 * cv / hi));
   return theme.neutral;
+}
+
+// ---------- selection / interaction ----------
+
+// Tableau reports selected marks by value; match them back to our rows on every column it returns
+async function syncSelection() {
+  if (!worksheet) return;
+  try {
+    const mc = await worksheet.getSelectedMarksAsync();
+    const next = new Set();
+    for (const tbl of mc.data || []) {
+      const names = tbl.columns.map(c => c.fieldName);
+      const keys = new Set(tbl.data.map(r => r.map(c => String(c.value)).join(SEP)));
+      rowVals.forEach((m, i) => {
+        if (keys.has(names.map(n => m.get(n)).join(SEP))) next.add(i + 1);
+      });
+    }
+    selected = next;
+  } catch (e) { console.warn('selection sync failed', e); }
+  scheduleDraw();
+}
+
+function applySelection(ids, ev) {
+  selected = new Set(ids);
+  scheduleDraw();
+  if (!worksheet) return;
+  const tip = ev && settings.tip === 'tableau' ? { tooltipAnchorPoint: { x: ev.clientX, y: ev.clientY } } : undefined;
+  worksheet.selectTuplesAsync([...selected], tableau.SelectOptions.Simple, tip).catch(e => console.warn(e));
+}
+
+// which period / panel is under the pointer, shared by hover and click
+function hitTest(ev) {
+  const el = ev.target.closest?.('.panel');
+  const ctx = draw.ctx;
+  if (!el || !ctx || !model) return null;
+  const plot = el.querySelector('.plot'), rect = plot.getBoundingClientRect();
+  const frac = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+  const nX = ctx.nX;
+  const i = ctx.band ? Math.min(nX - 1, Math.floor(frac * nX)) : Math.round(frac * (nX - 1));
+  return { el, plot, i, p: ctx.panels[+el.dataset.i] };
+}
+
+function onClick(ev) {
+  if (settings.click === 'off') return;
+  const h = hitTest(ev);
+  const multi = ev.ctrlKey || ev.metaKey || ev.shiftKey;
+  if (!h) { if (!multi && selected.size) applySelection([], ev); return; }
+  const ids = settings.click === 'mark'
+    ? h.p.tid.map(row => row[h.i]).filter(t => t !== null)
+    : h.p.tuples;
+  if (!ids.length) return;
+  const allIn = ids.every(t => selected.has(t));
+  let next;
+  if (multi) { next = new Set(selected); ids.forEach(t => (allIn ? next.delete(t) : next.add(t))); }
+  else next = allIn && ids.length === selected.size ? new Set() : new Set(ids);
+  applySelection([...next], ev);
+}
+
+function hoverTuple(tid, ev) {
+  if (!worksheet || tid === lastHoverTid) return;
+  lastHoverTid = tid;
+  const tip = settings.tip === 'tableau' && tid ? { tooltipAnchorPoint: { x: ev.clientX, y: ev.clientY } } : null;
+  worksheet.hoverTupleAsync(tid, tip, true).catch(() => {});
 }
 
 // ---------- drawing ----------
@@ -480,6 +556,8 @@ function draw() {
   const fmt1 = makeFmt(settings.fmt, decOf(settings.cdec), model.valueSample, ratio1, settings.ymode === 'unit');
   const fmt2 = makeFmt(settings.fmt2, decOf(settings.cdec2), model.value2Sample, ratio2, false);
   draw.ctx = { panels, band, share, nX, nS, fmt1, fmt2, view, draw2 };
+  const anySel = selected.size > 0;
+  const selState = p => (!anySel ? '' : (p.tuples.some(t => selected.has(t)) ? ' sel' : ' dim'));
 
   const hl = settings.hl.split(/[,，、;\n]/).map(s => s.trim().toLowerCase()).filter(Boolean);
   const isHl = p => hl.some(k => p.title.toLowerCase().includes(k) || (p.group && p.group.toLowerCase() === k));
@@ -499,7 +577,8 @@ function draw() {
         const from = v >= 0 ? base[i] : baseNeg[i], to = from + v;
         if (v >= 0) base[i] = to; else baseNeg[i] = to;
         const ya = y(Math.max(from, to)), yb = y(Math.min(from, to));
-        layers.bar += `<rect x="${f2(xAt(i) - bw / 2)}" y="${ya}" width="${f2(bw)}" height="${f2(Math.max(0, yb - ya))}" fill="${colOf(s, i)}"/>`;
+        const dimMark = o.tid && anySel && o.tid[s] && o.tid[s][i] !== null && !selected.has(o.tid[s][i]);
+        layers.bar += `<rect${dimMark ? ' class="dm"' : ''} x="${f2(xAt(i) - bw / 2)}" y="${ya}" width="${f2(bw)}" height="${f2(Math.max(0, yb - ya))}" fill="${colOf(s, i)}"/>`;
       }));
     } else if (type === 'gantt') {
       vs.forEach((row, s) => row.forEach((v, i) => {
@@ -580,7 +659,8 @@ function draw() {
     const vs = view(p);
 
     const layers = { area: '', bar: '', gantt: '', line: '' };
-    render(layers, t1, vs, y1, (s, i) => (useColor ? colorFor(p.cval[i]) : colors[s % colors.length]), {});
+    // per-bar dimming only inside a panel that holds part of the selection; other panels dim as a whole
+    render(layers, t1, vs, y1, (s, i) => (useColor ? colorFor(p.cval[i]) : colors[s % colors.length]), { tid: selState(p) === ' sel' ? p.tid : null });
     if (draw2) {
       render(layers, t2, p.vals2, y2, s => (nS === 1 ? color2 : colors[s % colors.length]),
         { narrow: t1 === 'bar', alpha: t2 === 'area' ? 0.4 : 0, halo: true });
@@ -628,7 +708,7 @@ function draw() {
       const s = subTxt ? `<div class="s" style="font-size:${f2(fsS)}px">${subTxt}</div>` : '';
       hd = left0 ? `<div class="hd left">${g}<div class="row">${t}${s}</div></div>` : `<div class="hd">${g}${t}${s}</div>`;
     }
-    html += `<div class="panel${bordered ? ' bd' : ''}" data-i="${idx}" style="left:${f2(left)}px;top:${f2(top)}px;width:${f2(pw)}px;height:${f2(ph)}px">${hd}` +
+    html += `<div class="panel${bordered ? ' bd' : ''}${selState(p)}" data-i="${idx}" style="left:${f2(left)}px;top:${f2(top)}px;width:${f2(pw)}px;height:${f2(ph)}px">${hd}` +
       `<div class="plotwrap" style="margin:0 ${f2(pad)}px"><svg class="plot" viewBox="0 0 100 100" preserveAspectRatio="none">${svg}</svg>${yrs}</div></div>`;
 
     // x axis under the lowest panel of each column
@@ -653,14 +733,11 @@ function draw() {
 // ---------- tooltip ----------
 
 function onHover(ev) {
-  const el = ev.target.closest?.('.panel');
-  const ctx = draw.ctx;
-  if (!el || !ctx || !model) return hideTip();
-  const plot = el.querySelector('.plot'), rect = plot.getBoundingClientRect();
-  const frac = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
-  const nX = ctx.nX;
-  const i = ctx.band ? Math.min(nX - 1, Math.floor(frac * nX)) : Math.round(frac * (nX - 1));
-  const p = ctx.panels[+el.dataset.i];
+  const h = hitTest(ev);
+  if (!h) return hideTip();
+  const ctx = draw.ctx, nX = ctx.nX;
+  const { plot, i, p } = h;
+  hoverTuple(p.tid.map(row => row[i]).find(t => t !== null) || 0, ev);
 
   document.querySelectorAll('.hair').forEach(h => { h.style.display = 'none'; });
   const hair = plot.querySelector('.hair');
@@ -687,6 +764,7 @@ function onHover(ev) {
     if (p.tot[i] !== null) body += row('Total', ctx.fmt1(p.tot[i]));
     if (model.has2) body += `<div class="tx">${esc(model.valueName)}  ·  ${esc(model.value2Name)}</div>`;
   }
+  if (settings.tip === 'tableau') { $tip.hidden = true; return; }   // Tableau draws its own tooltip via hoverTupleAsync
   $tip.innerHTML = `<div class="tt">${esc((p.group ? p.group + ' › ' : '') + p.title)}</div><div class="tx">${esc(model.xs[i].label)}</div>${body}`;
   $tip.hidden = false;
   const tw = $tip.offsetWidth, th = $tip.offsetHeight;
@@ -699,6 +777,7 @@ function onHover(ev) {
 
 function hideTip() {
   $tip.hidden = true;
+  if (lastHoverTid) { lastHoverTid = 0; if (worksheet) worksheet.hoverTupleAsync(0, null, true).catch(() => {}); }
   document.querySelectorAll('.hair').forEach(h => { h.style.display = 'none'; });
 }
 
@@ -722,6 +801,7 @@ function demoMode() {
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const recs = [];
+  const push = r => recs.push({ ...r, t: recs.length + 1 });
 
   if (kind === 'ratio') {
     const names = ['Sweden', 'Finland', 'Belgium', 'Spain', 'Norway', 'Portugal', 'North Macedonia', 'Denmark', 'Austria', 'Iceland',
@@ -735,7 +815,7 @@ function demoMode() {
       for (let yr = 2004; yr <= 2019; yr++) {
         v = Math.max(0.02, v + (end - v) / (2020 - yr) + (rnd() - 0.5) * 0.025);
         if (yr < startYear) continue;
-        recs.push({ p: [name], x: { key: String(yr), label: String(yr), sort: yr, year: null }, s: null, v, f: Math.round(v * 100) + '%', v2: null, f2: null, c: null, cf: null });
+        push({ p: [name], x: { key: String(yr), label: String(yr), sort: yr, year: null }, s: null, v, f: Math.round(v * 100) + '%', v2: null, f2: null, c: null, cf: null });
       }
     });
     model = buildModel(recs, { levels: 1, valueName: 'Value', value2Name: '', colorName: '' });
@@ -775,10 +855,10 @@ function demoMode() {
       const x = { key: iso, label: `${yr}/${String(m).padStart(2, '0')}`, sort: Date.UTC(yr, m - 1, 1), year: yr };
       const two = (val, d) => (dual ? { v2: val + d, f2: ((val + d) * 100).toFixed(1) + '%' } : { v2: null, f2: null });
       if (kind === 'series') {
-        recs.push({ p, x, s: 'International', v: Math.round(v * 0.6), f: null, ...two(lf, 0.03), c: null, cf: null });
-        recs.push({ p, x, s: 'Domestic', v: Math.round(v * 0.4), f: null, ...two(lf, -0.05), c: null, cf: null });
+        push({ p, x, s: 'International', v: Math.round(v * 0.6), f: null, ...two(lf, 0.03), c: null, cf: null });
+        push({ p, x, s: 'Domestic', v: Math.round(v * 0.4), f: null, ...two(lf, -0.05), c: null, cf: null });
       } else {
-        recs.push({ p, x, s: null, v, f: v.toLocaleString('en'), ...two(lf, 0), c: dev, cf: dev === null ? null : (dev * 100).toFixed(1) + '%' });
+        push({ p, x, s: null, v, f: v.toLocaleString('en'), ...two(lf, 0), c: dev, cf: dev === null ? null : (dev * 100).toFixed(1) + '%' });
       }
     });
   });
