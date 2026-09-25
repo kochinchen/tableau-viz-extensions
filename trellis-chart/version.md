@@ -12,6 +12,19 @@ Tableau viz extension，把一個度量依維度成員拆成多張小圖（small
 
 ---
 
+## v00.09 — 2026-09-25 — `trellis-chart-v00.09.trex`
+
+需重新加入（tile 名稱與提示文字改為英文）。
+
+**介面全面改為英文**
+- 設定對話框（`config.html`）：所有區塊標題、欄位名稱、選項與說明文字改為英文；`lang` 改為 `en`。
+- 圖表內文字（`extension.js`）：空白畫面指引、錯誤訊息、圖例的「共軸／副軸／0 對齊」標示、工具提示的「No data」「Total」、超過 400 格時的提示，全部改為英文。
+- manifest：tile 名稱改為 `A Panel`、`B X axis`、`C Value`、`D Color`；提示文字只保留英文。
+- 功能與設定值完全沒有變動，舊 workbook 存的設定照常讀取。
+
+**修正**
+- `extension.js` 的 `VERSION` 常數自 v00.08 起漏改（仍為 0.7），本版對齊為 0.9。
+
 ## v00.08 — 2026-09-20 — `trellis-chart-v00.08.trex`
 
 需重新加入。

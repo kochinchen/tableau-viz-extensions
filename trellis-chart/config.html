@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Trellis Chart 設定</title>
+  <title>Trellis Chart Settings</title>
   <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api/lib/tableau.extensions.1.latest.min.js"></script>
   <style>
     html, body { margin: 0; height: 100%; }
     body { font: 13px/1.5 "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif; color: #0E2442; background: #FDFDFD; display: flex; flex-direction: column; }
     h1 { font-size: 15px; margin: 0; padding: 12px 16px; background: #0E2442; color: #FDFDFD; }
-    form { flex: 1; overflow: auto; padding: 12px 16px; display: grid; grid-template-columns: 120px 1fr; gap: 9px 10px; align-items: center; align-content: start; }
+    form { flex: 1; overflow: auto; padding: 12px 16px; display: grid; grid-template-columns: 130px 1fr; gap: 9px 10px; align-items: center; align-content: start; }
     h2 { grid-column: 1 / -1; font-size: 12px; margin: 6px 0 0; color: #2C4E82; border-bottom: 1px solid #ECECEB; padding-bottom: 3px; }
     select, input[type=number], input[type=text] { width: 100%; box-sizing: border-box; padding: 5px 6px; border: 1px solid #ECECEB; border-radius: 4px; background: #fff; color: inherit; font: inherit; }
     small { color: #9C805F; grid-column: 2; margin-top: -6px; }
@@ -20,187 +20,187 @@
   </style>
 </head>
 <body>
-  <h1>Trellis Chart 設定 <span style="font-weight:400;opacity:.6;font-size:12px">v0.8</span></h1>
+  <h1>Trellis Chart Settings <span style="font-weight:400;opacity:.6;font-size:12px">v0.9</span></h1>
   <form id="f" onsubmit="return false">
-    <h2>版面</h2>
-    <label for="cols">橫向格數</label>
+    <h2>Layout</h2>
+    <label for="cols">Columns</label>
     <input id="cols" type="number" min="0" max="50" step="1">
-    <small>填 0 為自動；直向列數 = 分格總數 ÷ 橫向格數（無條件進位）</small>
+    <small>0 = automatic. Rows = number of panels ÷ columns, rounded up</small>
 
-    <label for="minh">最小列高 (px)</label>
+    <label for="minh">Minimum row height (px)</label>
     <input id="minh" type="number" min="0" max="400" step="10">
-    <small>填 0 為全部縮放塞進窗格、不出現捲軸；分格很多時可填 80–120，超出就改為上下捲動</small>
+    <small>0 = shrink everything to fit the pane, never scroll. With many panels, try 80–120: the pane scrolls vertically once rows would get shorter than this</small>
 
-    <label for="sort">分格排序</label>
+    <label for="sort">Sort panels by</label>
     <select id="sort">
-      <option value="last-desc">最後一期的值，大到小</option>
-      <option value="last-asc">最後一期的值，小到大</option>
-      <option value="avg-desc">平均值，大到小</option>
-      <option value="name">名稱</option>
-      <option value="data">依 Tableau 資料順序</option>
+      <option value="last-desc">Last period value, high to low</option>
+      <option value="last-asc">Last period value, low to high</option>
+      <option value="avg-desc">Average, high to low</option>
+      <option value="name">Name</option>
+      <option value="data">Tableau data order</option>
     </select>
 
-    <label for="group">兩階層時</label>
+    <label for="group">With two levels</label>
     <select id="group">
-      <option value="1">同一個第一階層排在一起</option>
-      <option value="0">不分組，全部一起排序</option>
+      <option value="1">Keep members of the same first level together</option>
+      <option value="0">Ignore the first level, sort everything together</option>
     </select>
 
-    <h2>C1 主軸（C 的第一個度量）</h2>
-    <label for="chart">圖形</label>
+    <h2>C1 · Primary axis (first measure on C)</h2>
+    <label for="chart">Mark type</label>
     <select id="chart">
-      <option value="bar">長條圖</option>
-      <option value="line">折線圖</option>
-      <option value="area">面積圖</option>
-      <option value="gantt">甘特（每期一條短橫線）</option>
+      <option value="bar">Bar</option>
+      <option value="line">Line</option>
+      <option value="area">Area</option>
+      <option value="gantt">Gantt (one short tick per period)</option>
     </select>
 
-    <label for="fmt">數字格式</label>
+    <label for="fmt">Number format</label>
     <select id="fmt">
-      <option value="tableau">沿用 Tableau 格式</option>
-      <option value="pct100">百分比：數值 × 100（0.85 → 85%）</option>
-      <option value="pctsign">百分比：只加 % 符號（85 → 85%）</option>
-      <option value="compact">精簡（1.2K、3.4M）</option>
+      <option value="tableau">Use Tableau's format</option>
+      <option value="pct100">Percent: value × 100 (0.85 → 85%)</option>
+      <option value="pctsign">Percent: add % sign only (85 → 85%)</option>
+      <option value="compact">Compact (1.2K, 3.4M)</option>
     </select>
 
-    <label for="cdec">小數位</label>
+    <label for="cdec">Decimal places</label>
     <select id="cdec">
-      <option value="auto">自動（沿用格式）</option>
-      <option value="0">不顯示小數</option>
-      <option value="1">1 位</option>
-      <option value="2">2 位</option>
-      <option value="3">3 位</option>
-      <option value="4">4 位</option>
+      <option value="auto">Automatic (follow the format)</option>
+      <option value="0">None</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
     </select>
 
-    <label for="ymode">直軸範圍</label>
+    <label for="ymode">Vertical axis range</label>
     <select id="ymode">
-      <option value="free">各分格獨立（看各自走勢）</option>
-      <option value="shared">所有分格共用（可互相比較大小）</option>
-      <option value="unit">固定 0–100%（比率型度量）</option>
-      <option value="pct">占比 100% 堆疊（D 顏色需放維度）</option>
+      <option value="free">Independent per panel (see each panel's own trend)</option>
+      <option value="shared">Shared across all panels (compare sizes)</option>
+      <option value="unit">Fixed 0–100% (for ratio measures)</option>
+      <option value="pct">100% stacked share (needs a dimension on D)</option>
     </select>
-    <small>副軸也跟著這個設定：各分格獨立，或所有分格共用</small>
+    <small>The secondary axis follows the same choice: independent per panel, or shared across panels</small>
 
-    <h2>C2 副軸（C 的第二個度量，選填）</h2>
-    <label for="chart2">圖形</label>
+    <h2>C2 · Secondary axis (second measure on C, optional)</h2>
+    <label for="chart2">Mark type</label>
     <select id="chart2">
-      <option value="bar">長條圖</option>
-      <option value="line">折線圖</option>
-      <option value="area">面積圖</option>
-      <option value="gantt">甘特（每期一條短橫線）</option>
+      <option value="bar">Bar</option>
+      <option value="line">Line</option>
+      <option value="area">Area</option>
+      <option value="gantt">Gantt (one short tick per period)</option>
     </select>
-    <small>主副軸都選長條時，副軸畫成主長條內的細長條</small>
+    <small>When both axes use bars, the secondary bar is drawn as a thin bar inside the primary one</small>
 
-    <label for="axis2">與主軸的關係</label>
+    <label for="axis2">Relation to primary axis</label>
     <select id="axis2">
-      <option value="indep">不共軸：副軸用自己的刻度（單位不同時）</option>
-      <option value="zero">不共軸，但 0 基準線對齊（負值畫在基準線下方）</option>
-      <option value="sync">共軸：和主軸用同一個刻度（單位相同時）</option>
+      <option value="indep">Separate: own scale (different units)</option>
+      <option value="zero">Separate, but zero baselines aligned (negatives drawn below the baseline)</option>
+      <option value="sync">Shared: same scale as the primary axis (same units)</option>
     </select>
 
-    <label for="zero2">副軸起點</label>
+    <label for="zero2">Secondary axis start</label>
     <select id="zero2">
-      <option value="0">自動範圍（折線、甘特較看得出起伏）</option>
-      <option value="1">從 0 開始</option>
+      <option value="0">Automatic range (lines and ticks show more movement)</option>
+      <option value="1">Start at 0</option>
     </select>
-    <small>只在「不共軸」且圖形為折線或甘特時有差別；長條與面積一律從 0 開始。選「0 基準線對齊」或「共軸」時，副軸一定包含 0</small>
+    <small>Only matters for "Separate" with a line or gantt; bars and areas always start at 0. With "zero baselines aligned" or "Shared", the secondary axis always includes 0</small>
 
-    <label for="fmt2">數字格式</label>
+    <label for="fmt2">Number format</label>
     <select id="fmt2">
-      <option value="tableau">沿用 Tableau 格式</option>
-      <option value="pct100">百分比：數值 × 100（0.85 → 85%）</option>
-      <option value="pctsign">百分比：只加 % 符號（85 → 85%）</option>
-      <option value="compact">精簡（1.2K、3.4M）</option>
+      <option value="tableau">Use Tableau's format</option>
+      <option value="pct100">Percent: value × 100 (0.85 → 85%)</option>
+      <option value="pctsign">Percent: add % sign only (85 → 85%)</option>
+      <option value="compact">Compact (1.2K, 3.4M)</option>
     </select>
 
-    <label for="cdec2">小數位</label>
+    <label for="cdec2">Decimal places</label>
     <select id="cdec2">
-      <option value="auto">自動（沿用格式）</option>
-      <option value="0">不顯示小數</option>
-      <option value="1">1 位</option>
-      <option value="2">2 位</option>
-      <option value="3">3 位</option>
-      <option value="4">4 位</option>
+      <option value="auto">Automatic (follow the format)</option>
+      <option value="0">None</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
     </select>
 
-    <label for="color2">副軸顏色</label>
+    <label for="color2">Secondary colour</label>
     <div class="row">
-      <label><input id="color2Auto" type="checkbox"> 依主題</label>
+      <label><input id="color2Auto" type="checkbox"> From theme</label>
       <input id="color2" type="color" value="#0E2442">
     </div>
 
-    <label for="swap">主副軸對調</label>
+    <label for="swap">Swap axes</label>
     <select id="swap">
-      <option value="0">否：第一個膠囊為主軸</option>
-      <option value="1">是：第二個膠囊為主軸</option>
+      <option value="0">No: first pill is the primary axis</option>
+      <option value="1">Yes: second pill is the primary axis</option>
     </select>
 
-    <h2>D 顏色</h2>
-    <label for="cmode">長條上色</label>
+    <h2>D · Colour</h2>
+    <label for="cmode">Bar shading</label>
     <select id="cmode">
-      <option value="neg">只標出負值（衰退越多越深）</option>
-      <option value="div">正負雙向（衰退、成長各一色）</option>
+      <option value="neg">Highlight negatives only (deeper colour = bigger drop)</option>
+      <option value="div">Diverging (one colour for drops, another for gains)</option>
     </select>
-    <small>D 放度量（如年增率）時生效；放維度則改為堆疊分色</small>
+    <small>Applies when D holds a measure (e.g. YoY %). A dimension on D stacks the bars by member instead</small>
 
-    <label for="ddec">小數位</label>
+    <label for="ddec">Decimal places</label>
     <select id="ddec">
-      <option value="auto">自動（沿用格式）</option>
-      <option value="0">不顯示小數</option>
-      <option value="1">1 位</option>
-      <option value="2">2 位</option>
-      <option value="3">3 位</option>
-      <option value="4">4 位</option>
+      <option value="auto">Automatic (follow the format)</option>
+      <option value="0">None</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
     </select>
 
-    <h2>標示</h2>
-    <label for="sub">副標</label>
+    <h2>Labels</h2>
+    <label for="sub">Subtitle</label>
     <select id="sub">
-      <option value="1">顯示主軸最後一期的值</option>
-      <option value="0">不顯示</option>
+      <option value="1">Show the primary axis value of the last period</option>
+      <option value="0">Hide</option>
     </select>
 
-    <label for="yr">年份標記</label>
+    <label for="yr">Year markers</label>
     <select id="yr">
-      <option value="1">橫軸為日期時，在每年第一期上方標年份</option>
-      <option value="0">不顯示</option>
+      <option value="1">When the X axis is a date, label the first period of each year</option>
+      <option value="0">Hide</option>
     </select>
 
-    <h2>樣式</h2>
-    <label for="hl">強調特定分格</label>
-    <input id="hl" type="text" placeholder="填分格的名稱，例：桌子, 椅子">
-    <small>這裡不是圖表標題。填入分格（A 的成員）名稱的一部分，該分格的標題會改用強調色，方便在一堆小圖裡找到它；多個以逗號分隔</small>
+    <h2>Style</h2>
+    <label for="hl">Highlight panels</label>
+    <input id="hl" type="text" placeholder="Panel names, e.g. Tables, Chairs">
+    <small>This is not the chart title. Type part of a panel name (a member of A) and that panel's title switches to the accent colour, so it stands out among the small charts. Separate several with commas</small>
 
-    <label for="align">標題對齊</label>
+    <label for="align">Title alignment</label>
     <select id="align">
-      <option value="left">靠左（副標在同一行右側）</option>
-      <option value="center">置中</option>
+      <option value="left">Left (subtitle on the same line, right side)</option>
+      <option value="center">Centre</option>
     </select>
 
-    <label for="theme">主題</label>
+    <label for="theme">Theme</label>
     <select id="theme">
-      <option value="paper">白底格線 + 灰藍長條</option>
-      <option value="navy">鋼藍分格 + 琥珀橘</option>
-      <option value="light">天空藍分格 + 鋼藍</option>
-      <option value="warm">沙金分格 + 琥珀橘</option>
-      <option value="dark">深色</option>
-      <option value="teal">青綠 + 粉紅（原圖配色）</option>
+      <option value="paper">White with grid lines + grey-blue bars</option>
+      <option value="navy">Steel-blue panels + amber</option>
+      <option value="light">Sky-blue panels + steel blue</option>
+      <option value="warm">Sand panels + amber</option>
+      <option value="dark">Dark</option>
+      <option value="teal">Teal + pink</option>
     </select>
 
-    <label for="accent">強調色</label>
+    <label for="accent">Accent colour</label>
     <div class="row">
-      <label><input id="accentAuto" type="checkbox"> 依主題</label>
+      <label><input id="accentAuto" type="checkbox"> From theme</label>
       <input id="accent" type="color" value="#D78212">
     </div>
-    <small>用在：被強調的分格標題、D 放度量時的衰退色與其年份標記。取消「依主題」自選顏色時，沒有依度量上色的長條也會改用這個顏色</small>
+    <small>Used for highlighted panel titles, and for the drop colour and its year marker when D holds a measure. If you untick "From theme" and pick a colour, plain bars (not shaded by a measure) use it too</small>
 
-    <label for="scale">文字大小</label>
+    <label for="scale">Text size</label>
     <div class="row"><input id="scale" type="range" min="0.6" max="2" step="0.1"><span id="scaleOut"></span></div>
   </form>
   <footer>
-    <button id="cancel" type="button">取消</button>
-    <button id="save" type="button" class="primary">套用</button>
+    <button id="cancel" type="button">Cancel</button>
+    <button id="save" type="button" class="primary">Apply</button>
   </footer>
 
   <script>

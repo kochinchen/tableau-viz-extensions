@@ -18,7 +18,7 @@ const DEFAULTS = {
   cmode: 'neg', ddec: 'auto',                                                   // D as a measure
   hl: '', align: 'left', theme: 'paper', accent: '', scale: 1
 };
-const VERSION = '0.7';
+const VERSION = '0.9';
 const MAX_PANELS = 400;
 const SEP = String.fromCharCode(31);
 
@@ -67,8 +67,7 @@ async function refresh() {
       if (e.id === 'color') colorRole = String(e.field.role || '').toLowerCase();
     }
     if (!enc.value.length) {
-      return drawEmpty('請把一個<b>度量</b>拖到 <b>C 數值</b>，再把維度拖到 <b>A 分格</b>（1–2 個）、日期或維度拖到 <b>B 橫軸</b>' +
-        '<br><span class="en">Drop a <b>measure</b> on <b>C Value</b>, then 1–2 dimensions on <b>A Panel</b> and a date or dimension on <b>B X axis</b></span>');
+      return drawEmpty('Drop a <b>measure</b> on <b>C Value</b>,<br>then 1–2 dimensions on <b>A Panel</b> and a date or dimension on <b>B X axis</b>');
     }
 
     const reader = await worksheet.getSummaryDataReaderAsync();
@@ -92,7 +91,7 @@ async function refresh() {
       if (guess) vCols = [guess];
     }
     if (!vCols.length) {
-      return drawEmpty('找不到數值欄位，請確認 <b>C 數值</b> 放的是度量<br><span class="en">No numeric field found. Make sure <b>C Value</b> holds a measure</span>');
+      return drawEmpty('No numeric field found.<br>Make sure <b>C Value</b> holds a measure');
     }
     if (settings.swap === '1' && vCols.length === 2) vCols.reverse();
     const [vCol, v2Col] = vCols;
@@ -124,14 +123,14 @@ async function refresh() {
         c: num(cCol), cf: cCol ? r[cCol.index].formattedValue : null
       });
     }
-    if (!recs.length) return drawEmpty('目前的篩選條件下沒有資料<br><span class="en">No data under the current filters</span>');
+    if (!recs.length) return drawEmpty('No data under the current filters');
     model = buildModel(recs, {
       levels: pCols.length, valueName: vCol.fieldName, value2Name: v2Col ? v2Col.fieldName : '', colorName: cCol ? cCol.fieldName : ''
     });
     scheduleDraw();
   } catch (e) {
     console.error(e);
-    drawEmpty('讀取資料時發生錯誤：' + esc(e.message || String(e)));
+    drawEmpty('Could not read the data: ' + esc(e.message || String(e)));
   }
 }
 
@@ -558,8 +557,8 @@ function draw() {
     if (model.has2) {
       if (nS === 1) leftItems += `<span>${sym(t1, useColor ? theme.neutral : colors[0])}${esc(model.valueName)}</span>`;
       leftItems += skipped2
-        ? `<span class="cn">${esc(model.value2Name)}：堆疊分色時副軸只支援折線或甘特</span>`
-        : `<span>${sym(t2, nS === 1 ? color2 : 'var(--text)')}${esc(model.value2Name)}${sync ? '（共軸）' : (alignZero ? '（副軸，0 對齊）' : '（副軸）')}</span>`;
+        ? `<span class="cn">${esc(model.value2Name)}: with stacked colours the secondary axis supports line or gantt only</span>`
+        : `<span>${sym(t2, nS === 1 ? color2 : 'var(--text)')}${esc(model.value2Name)}${sync ? ' (shared axis)' : (alignZero ? ' (secondary, zero aligned)' : ' (secondary)')}</span>`;
     }
     let rightItems = '';
     if (useColor) {
@@ -647,7 +646,7 @@ function draw() {
     }
   });
 
-  if (all.length > MAX_PANELS) html += `<div class="note">僅顯示前 ${MAX_PANELS} / ${all.length} 格</div>`;
+  if (all.length > MAX_PANELS) html += `<div class="note">Showing the first ${MAX_PANELS} of ${all.length} panels</div>`;
   $viz.innerHTML = html;
 }
 
@@ -671,7 +670,7 @@ function onHover(ev) {
 
   const row = (label, value, col) => `<div class="tr"><span>${col ? `<i style="background:${col}"></i>` : ''}${esc(label)}</span><b>${esc(value)}</b></div>`;
   let body = '';
-  if (p.tot[i] === null && p.tot2[i] === null) body = row('無資料 No data', '');
+  if (p.tot[i] === null && p.tot2[i] === null) body = row('No data', '');
   else if (ctx.nS === 1) {
     if (p.tot[i] !== null) body += row(model.has2 ? model.valueName : '', ctx.fmt1(p.tot[i], p.fmt[i]), model.has2 ? colors[0] : '');
     if (model.has2 && p.tot2[i] !== null) body += row(model.value2Name, ctx.fmt2(p.tot2[i], p.fmt2[i]), color2);
@@ -685,7 +684,7 @@ function onHover(ev) {
       if (model.has2 && v2 !== null) txt += '  ·  ' + ctx.fmt2(v2);
       body += row(s, txt, colors[k % colors.length]);
     });
-    if (p.tot[i] !== null) body += row('合計 Total', ctx.fmt1(p.tot[i]));
+    if (p.tot[i] !== null) body += row('Total', ctx.fmt1(p.tot[i]));
     if (model.has2) body += `<div class="tx">${esc(model.valueName)}  ·  ${esc(model.value2Name)}</div>`;
   }
   $tip.innerHTML = `<div class="tt">${esc((p.group ? p.group + ' › ' : '') + p.title)}</div><div class="tx">${esc(model.xs[i].label)}</div>${body}`;
