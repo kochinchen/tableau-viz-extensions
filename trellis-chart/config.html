@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <h1>Trellis Chart Settings <span style="font-weight:400;opacity:.6;font-size:12px">v0.10</span></h1>
+  <h1>Trellis Chart Settings <span style="font-weight:400;opacity:.6;font-size:12px">v0.11</span></h1>
   <form id="f" onsubmit="return false">
     <h2>Layout</h2>
     <label for="cols">Columns</label>
@@ -157,8 +157,9 @@
     <h2>Interaction</h2>
     <label for="click">Click selects</label>
     <select id="click">
-      <option value="panel">The whole panel (all periods of that member)</option>
-      <option value="mark">One period only (the bar under the pointer)</option>
+      <option value="auto">On a bar: that period only. On blank space: the whole panel</option>
+      <option value="panel">Always the whole panel (all periods of that member)</option>
+      <option value="mark">Always one period (the one under the pointer)</option>
       <option value="off">Nothing (clicks ignored)</option>
     </select>
     <small>Selection goes to Tableau, so dashboard actions (filter / highlight) on other sheets work. Ctrl / Cmd-click adds, click again or press Esc to clear</small>
@@ -220,7 +221,7 @@
   </footer>
 
   <script>
-    const DEFAULTS = { cols: '0', minh: '0', sort: 'name', group: '1', ymode: 'free', sub: '0', yr: '1', chart: 'bar', fmt: 'tableau', cdec: 'auto', chart2: 'line', fmt2: 'tableau', cdec2: 'auto', axis2: 'indep', zero2: '0', swap: '0', color2: '', cmode: 'neg', ddec: 'auto', hl: '', align: 'left', theme: 'paper', accent: '', scale: '1', click: 'panel', tip: 'own' };
+    const DEFAULTS = { cols: '0', minh: '0', sort: 'name', group: '1', ymode: 'free', sub: '0', yr: '1', chart: 'bar', fmt: 'tableau', cdec: 'auto', chart2: 'line', fmt2: 'tableau', cdec2: 'auto', axis2: 'indep', zero2: '0', swap: '0', color2: '', cmode: 'neg', ddec: 'auto', hl: '', align: 'left', theme: 'paper', accent: '', scale: '1', click: 'auto', tip: 'own' };
     const $ = id => document.getElementById(id);
     const simple = ['cols', 'minh', 'sort', 'group', 'ymode', 'sub', 'yr', 'chart', 'fmt', 'cdec', 'chart2', 'fmt2', 'cdec2', 'axis2', 'zero2', 'swap', 'cmode', 'ddec', 'hl', 'align', 'theme', 'scale', 'click', 'tip'];
 

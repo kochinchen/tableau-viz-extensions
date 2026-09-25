@@ -17,9 +17,9 @@ const DEFAULTS = {
   chart2: 'line', fmt2: 'tableau', cdec2: 'auto', axis2: 'indep', zero2: '0', swap: '0', color2: '',   // C2, secondary axis
   cmode: 'neg', ddec: 'auto',                                                   // D as a measure
   hl: '', align: 'left', theme: 'paper', accent: '', scale: 1,
-  click: 'panel', tip: 'own'   // click: panel | mark | off; tip: own | tableau
+  click: 'auto', tip: 'own'   // click: auto | panel | mark | off; tip: own | tableau
 };
-const VERSION = '0.10';
+const VERSION = '0.11';
 const MAX_PANELS = 400;
 const SEP = String.fromCharCode(31);
 
@@ -362,7 +362,9 @@ function onClick(ev) {
   const h = hitTest(ev);
   const multi = ev.ctrlKey || ev.metaKey || ev.shiftKey;
   if (!h) { if (!multi && selected.size) applySelection([], ev); return; }
-  const ids = settings.click === 'mark'
+  // auto: a click on a drawn mark picks that one period, a click on the panel's blank area picks the whole member
+  const onMark = settings.click === 'mark' || (settings.click === 'auto' && isMark(ev.target));
+  const ids = onMark
     ? h.p.tid.map(row => row[h.i]).filter(t => t !== null)
     : h.p.tuples;
   if (!ids.length) return;
@@ -371,6 +373,14 @@ function onClick(ev) {
   if (multi) { next = new Set(selected); ids.forEach(t => (allIn ? next.delete(t) : next.add(t))); }
   else next = allIn && ids.length === selected.size ? new Set() : new Set(ids);
   applySelection([...next], ev);
+}
+
+// bars, gantt ticks, lines and areas count as marks; grid, baseline and hairline do not
+function isMark(el) {
+  if (!el || !el.closest || !el.closest('.plot')) return false;
+  const tag = el.tagName.toLowerCase();
+  if (!['rect', 'path', 'line'].includes(tag)) return false;
+  return !['grid', 'zero', 'hair'].some(c => el.classList.contains(c));
 }
 
 function hoverTuple(tid, ev) {

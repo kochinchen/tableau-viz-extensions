@@ -12,6 +12,16 @@ Tableau viz extension，把一個度量依維度成員拆成多張小圖（small
 
 ---
 
+## v00.11 — 2026-09-25 — `trellis-chart-v00.11.trex`
+
+Reload 即可（manifest 與 v00.10 相比只改了 `extension-version`）。
+
+**調整：點選依落點決定範圍**
+- 點在長條（或折線、面積、甘特短線）上：只選那一期，儀表板動作會篩到該期的粒度（年／季／月）。
+- 點在分格的空白處：選該成員的全部期間，篩到 A 層級。
+- 「Click selects」新增預設值 Auto（上述行為）；原本的「整格」「單期」「關閉」保留為強制模式。
+- 折線的可點範圍改用線寬本身，滑鼠在長條或線上會顯示手形游標。
+
 ## v00.10 — 2026-09-25 — `trellis-chart-v00.10.trex`
 
 Reload 即可（manifest 與 v00.09 相比只改了 `extension-version`）。
