@@ -4,6 +4,8 @@ Tableau viz extensions by Bill Chen。每個子資料夾是一個 extension，�
 
 ## Trellis Chart
 
+![Trellis Chart in Tableau Desktop](trellis-chart/pic/cover.png)
+
 把一個度量依維度成員拆成多張小圖（small multiples）。
 
 ### 什麼是 Trellis Chart？
