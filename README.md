@@ -8,6 +8,7 @@ Tableau viz extensions by Bill Chen。每個子資料夾是一個 extension，�
 
 - 程式：[`trellis-chart/`](trellis-chart/)
 - 版本紀錄：[`trellis-chart/version.md`](trellis-chart/version.md)
+- 使用說明（英文，含截圖）：[`trellis-chart/docs/user-guide.html`](trellis-chart/docs/user-guide.html)，線上閱讀：<https://kochinchen.github.io/tableau-viz-extensions/trellis-chart/docs/user-guide.html>
 - 線上網址：<https://kochinchen.github.io/tableau-viz-extensions/trellis-chart/index.html>
 - 安裝：下載最新的 `.trex`（v00.08 以後），在 Tableau 工作表的「標記」卡片選「新增擴充功能」→ 從檔案加入。只要這一個檔案，不必整個資料夾。
 - 本機開發：用 `python3 -m http.server 8765` 在 `trellis-chart/` 起服務，改用 v00.07 的 `.trex`（指向 localhost）。
